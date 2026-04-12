@@ -31,6 +31,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve package version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            PACKAGE_VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            PACKAGE_VERSION="0.$(date +%y%m%d).${GITHUB_RUN_NUMBER}"
+          fi
+
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          echo "PACKAGE_RELEASE=1" >> "$GITHUB_ENV"
+
       - name: Install host tools
         run: |
           sudo apt-get update
@@ -76,7 +87,9 @@ jobs:
           fi
 
           make defconfig
-          make package/luci-theme-proton2025/compile V=s
+          make package/luci-theme-proton2025/compile V=s \
+            PROTON_VERSION="$PACKAGE_VERSION" \
+            PROTON_RELEASE="$PACKAGE_RELEASE"
 
           mkdir -p "$GITHUB_WORKSPACE/dist/$PACKAGE_FORMAT"
           if [ "$PACKAGE_FORMAT" = "apk" ]; then
@@ -94,6 +107,7 @@ jobs:
             cp "$package_file" "$GITHUB_WORKSPACE/dist/$PACKAGE_FORMAT/"
           done < "$RUNNER_TEMP/package-files.txt"
 
+          echo "Built package version: ${PACKAGE_VERSION}-r${PACKAGE_RELEASE}"
           ls -lah "$GITHUB_WORKSPACE/dist/$PACKAGE_FORMAT"
 
       - name: Upload ${{ matrix.package_format }} artifact

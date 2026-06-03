@@ -162,21 +162,32 @@
             "Скругление углов"
         ]);
 
-        var anchor = accentRow || themeRow || borderRow;
-
-        if (!anchor || !anchor.parentNode) {
-            console.warn("[Proton2025] Could not find Proton settings row for login animation");
-            return;
-        }
-
         var row = createRow();
 
-        if (accentRow) {
+        if (accentRow && accentRow.parentNode) {
             accentRow.parentNode.insertBefore(row, accentRow.nextSibling);
-        } else if (themeRow) {
+        } else if (themeRow && themeRow.parentNode) {
             themeRow.parentNode.insertBefore(row, themeRow.nextSibling);
-        } else if (borderRow) {
+        } else if (borderRow && borderRow.parentNode) {
             borderRow.parentNode.insertBefore(row, borderRow);
+        } else {
+            var container =
+                document.querySelector(".cbi-section") ||
+                document.querySelector(".cbi-map") ||
+                document.getElementById("maincontent");
+
+            if (!container) {
+                console.warn("[Proton2025] Could not find container for login animation setting");
+                return;
+            }
+
+            var firstValue = container.querySelector(".cbi-value");
+
+            if (firstValue && firstValue.parentNode) {
+                firstValue.parentNode.insertBefore(row, firstValue.nextSibling);
+            } else {
+                container.appendChild(row);
+            }
         }
 
         console.log("[Proton2025] Login animation setting injected");
